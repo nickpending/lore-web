@@ -10,6 +10,9 @@ export interface TerrainCell {
   value: number; // 0-1 normalized activity level
   count: number; // raw activity count
   date: string; // ISO date string for tooltip
+  commits: number;
+  tasks: number;
+  personal: number;
 }
 
 // 52×7 grid of terrain cells (weeks × days)
@@ -55,28 +58,52 @@ export function buildTerrainHeightmap(
   // Use current year for grid
   const currentYear = new Date().getFullYear();
 
-  // Count activities per week/day
-  const activityCounts = new Map<string, number>();
+  // Track counts per type
+  interface CellCounts {
+    commits: number;
+    tasks: number;
+    personal: number;
+  }
+  const cellCounts = new Map<string, CellCounts>();
 
-  // Helper to increment count for a date
-  const addActivity = (dateStr: string) => {
+  // Helper to get key from date
+  const getKey = (dateStr: string): string | null => {
     const date = new Date(dateStr);
-    if (isNaN(date.getTime())) return;
-    if (date.getFullYear() !== currentYear) return;
-
+    if (isNaN(date.getTime())) return null;
+    if (date.getFullYear() !== currentYear) return null;
     const week = getISOWeek(date);
-    const day = date.getDay(); // 0=Sunday, 6=Saturday
-    const key = `${week}-${day}`;
-    activityCounts.set(key, (activityCounts.get(key) ?? 0) + 1);
+    const day = date.getDay();
+    return `${week}-${day}`;
+  };
+
+  // Helper to ensure cell exists
+  const ensureCell = (key: string): CellCounts => {
+    if (!cellCounts.has(key)) {
+      cellCounts.set(key, { commits: 0, tasks: 0, personal: 0 });
+    }
+    return cellCounts.get(key)!;
   };
 
   // Aggregate from all sources
-  commits.forEach((c) => addActivity(c.date));
-  tasks.forEach((t) => addActivity(t.captured));
-  personal.forEach((p) => addActivity(p.date));
+  commits.forEach((c) => {
+    const key = getKey(c.date);
+    if (key) ensureCell(key).commits++;
+  });
+  tasks.forEach((t) => {
+    const key = getKey(t.captured);
+    if (key) ensureCell(key).tasks++;
+  });
+  personal.forEach((p) => {
+    const key = getKey(p.date);
+    if (key) ensureCell(key).personal++;
+  });
 
   // Find max for normalization
-  const maxCount = Math.max(1, ...Array.from(activityCounts.values()));
+  let maxCount = 1;
+  cellCounts.forEach((c) => {
+    const total = c.commits + c.tasks + c.personal;
+    if (total > maxCount) maxCount = total;
+  });
 
   // Build 52×7 grid
   const grid: TerrainGrid = [];
@@ -86,15 +113,23 @@ export function buildTerrainHeightmap(
 
     for (let day = 0; day < 7; day++) {
       const key = `${week}-${day}`;
-      const count = activityCounts.get(key) ?? 0;
+      const counts = cellCounts.get(key) ?? {
+        commits: 0,
+        tasks: 0,
+        personal: 0,
+      };
+      const total = counts.commits + counts.tasks + counts.personal;
       const cellDate = getDateFromWeekDay(currentYear, week, day);
 
       weekRow.push({
         week,
         day,
-        value: count / maxCount,
-        count,
+        value: total / maxCount,
+        count: total,
         date: cellDate.toISOString().split("T")[0],
+        commits: counts.commits,
+        tasks: counts.tasks,
+        personal: counts.personal,
       });
     }
 

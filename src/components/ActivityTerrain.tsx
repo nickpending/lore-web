@@ -1,9 +1,9 @@
 // 3D Activity Terrain - Galaxy/Nebula visualization driven by activity data
 // Matches spike prototype aesthetic with data-driven cluster placement
 
-import { useMemo, useRef } from "react";
-import { Canvas, useFrame } from "@react-three/fiber";
-import { Grid, OrbitControls, Text } from "@react-three/drei";
+import { useMemo, useRef, useState, useEffect } from "react";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
+import { Grid, Text, Html } from "@react-three/drei";
 import { EffectComposer, Bloom } from "@react-three/postprocessing";
 import * as THREE from "three";
 import type { TerrainGrid } from "../lib/terrain-data";
@@ -14,6 +14,36 @@ interface ClusterCenter {
   z: number;
   size: number;
   density: number;
+}
+
+// Hover state for tooltip
+interface HoverState {
+  cell: import("../lib/terrain-data").TerrainCell;
+  position: THREE.Vector3;
+}
+
+// Grid dimensions (must match gridToClusters)
+const GRID_WIDTH = 28;
+const GRID_DEPTH = 8;
+
+// Map 3D coordinates to grid cell
+function positionToCell(
+  x: number,
+  z: number,
+  grid: TerrainGrid,
+): import("../lib/terrain-data").TerrainCell | null {
+  // Convert world coords to grid indices
+  // X: -14 to +14 maps to week 0-51
+  // Z: -4 to +4 maps to day 0-6
+  const weekIdx = Math.floor(((x + GRID_WIDTH / 2) / GRID_WIDTH) * 52);
+  const dayIdx = Math.floor(((z + GRID_DEPTH / 2) / GRID_DEPTH) * 7);
+
+  // Bounds check
+  if (weekIdx < 0 || weekIdx >= 52 || dayIdx < 0 || dayIdx >= 7) {
+    return null;
+  }
+
+  return grid[weekIdx]?.[dayIdx] ?? null;
 }
 
 // Convert terrain grid to cluster centers - high activity = bigger clusters
@@ -550,6 +580,231 @@ function GridFloor() {
   );
 }
 
+// Horizontal-only camera panning
+function HorizontalPan() {
+  const { camera, gl } = useThree();
+  const isDragging = useRef(false);
+  const lastX = useRef(0);
+  const initialized = useRef(false);
+
+  // Scroll to current month on mount
+  useEffect(() => {
+    if (!initialized.current) {
+      initialized.current = true;
+      // December = week ~50, maps to X ≈ 12
+      const currentWeek = Math.ceil(
+        (new Date().getTime() -
+          new Date(new Date().getFullYear(), 0, 1).getTime()) /
+          (7 * 24 * 60 * 60 * 1000),
+      );
+      // Show current month on right side with some space, center ~6 weeks back
+      const targetX = ((currentWeek - 26 - 8) / 52) * 28;
+      camera.position.x = Math.max(-14, Math.min(14, targetX));
+    }
+  }, [camera]);
+
+  useEffect(() => {
+    const canvas = gl.domElement;
+
+    const onPointerDown = (e: PointerEvent) => {
+      isDragging.current = true;
+      lastX.current = e.clientX;
+      canvas.style.cursor = "grabbing";
+    };
+
+    const onPointerMove = (e: PointerEvent) => {
+      if (!isDragging.current) return;
+      const deltaX = e.clientX - lastX.current;
+      lastX.current = e.clientX;
+      // Move camera horizontally (negative because drag left = see right)
+      camera.position.x -= deltaX * 0.02;
+      // Clamp to grid bounds (-14 to +14)
+      camera.position.x = Math.max(-14, Math.min(14, camera.position.x));
+    };
+
+    const onPointerUp = () => {
+      isDragging.current = false;
+      canvas.style.cursor = "grab";
+    };
+
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      // Scroll horizontally
+      camera.position.x += e.deltaX * 0.01 + e.deltaY * 0.01;
+      camera.position.x = Math.max(-14, Math.min(14, camera.position.x));
+    };
+
+    canvas.style.cursor = "grab";
+    canvas.addEventListener("pointerdown", onPointerDown);
+    canvas.addEventListener("pointermove", onPointerMove);
+    canvas.addEventListener("pointerup", onPointerUp);
+    canvas.addEventListener("pointerleave", onPointerUp);
+    canvas.addEventListener("wheel", onWheel, { passive: false });
+
+    return () => {
+      canvas.removeEventListener("pointerdown", onPointerDown);
+      canvas.removeEventListener("pointermove", onPointerMove);
+      canvas.removeEventListener("pointerup", onPointerUp);
+      canvas.removeEventListener("pointerleave", onPointerUp);
+      canvas.removeEventListener("wheel", onWheel);
+    };
+  }, [camera, gl]);
+
+  return null;
+}
+
+// Day names for tooltip
+const DAY_NAMES = [
+  "Sunday",
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+];
+
+// Invisible interaction zone for hover detection
+function HoverZone({
+  grid,
+  onHover,
+}: {
+  grid: TerrainGrid;
+  onHover: (state: HoverState | null) => void;
+}) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const handlePointerMove = (e: any) => {
+    e.stopPropagation();
+    const { x, z } = e.point as THREE.Vector3;
+    const cell = positionToCell(x, z, grid);
+
+    if (cell) {
+      onHover({
+        cell,
+        position: new THREE.Vector3(x, 0.5, z),
+      });
+    } else {
+      onHover(null);
+    }
+  };
+
+  const handlePointerLeave = () => {
+    onHover(null);
+  };
+
+  return (
+    <mesh
+      position={[0, 0, 0]}
+      rotation={[-Math.PI / 2, 0, 0]}
+      onPointerMove={handlePointerMove}
+      onPointerLeave={handlePointerLeave}
+    >
+      <planeGeometry args={[GRID_WIDTH, GRID_DEPTH]} />
+      <meshBasicMaterial transparent opacity={0} />
+    </mesh>
+  );
+}
+
+// Format date for tooltip display
+function formatDate(isoDate: string): string {
+  const date = new Date(isoDate + "T12:00:00"); // Add time to avoid timezone issues
+  return date.toLocaleDateString("en-US", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+  });
+}
+
+// Build breakdown string with only non-zero counts
+function formatBreakdown(
+  cell: import("../lib/terrain-data").TerrainCell,
+): string {
+  const parts: string[] = [];
+  if (cell.commits > 0)
+    parts.push(`${cell.commits} commit${cell.commits > 1 ? "s" : ""}`);
+  if (cell.tasks > 0)
+    parts.push(`${cell.tasks} task${cell.tasks > 1 ? "s" : ""}`);
+  if (cell.personal > 0) parts.push(`${cell.personal} personal`);
+  return parts.join(" · ");
+}
+
+// Tooltip component using drei Html
+function Tooltip({ hover }: { hover: HoverState }) {
+  const { cell, position } = hover;
+  const breakdown = formatBreakdown(cell);
+
+  return (
+    <Html
+      position={[position.x, position.y + 0.5, position.z]}
+      center
+      style={{
+        pointerEvents: "none",
+        whiteSpace: "nowrap",
+      }}
+    >
+      <div
+        style={{
+          background: "rgba(2, 3, 4, 0.9)",
+          border: "1px solid #1e2a38",
+          borderRadius: "4px",
+          padding: "8px 12px",
+          color: "#e0e0e0",
+          fontSize: "13px",
+          fontFamily: "Inter, system-ui, sans-serif",
+          boxShadow: "0 4px 12px rgba(0, 0, 0, 0.5)",
+        }}
+      >
+        <div style={{ color: "#00D9FF", fontWeight: 500, marginBottom: "2px" }}>
+          {formatDate(cell.date)}
+        </div>
+        {breakdown ? (
+          <div style={{ fontSize: "12px" }}>{breakdown}</div>
+        ) : (
+          <div style={{ color: "#666", fontSize: "12px" }}>—</div>
+        )}
+      </div>
+    </Html>
+  );
+}
+
+// Scene component - manages hover state inside Canvas
+function Scene({
+  grid,
+  clusters,
+}: {
+  grid: TerrainGrid;
+  clusters: ClusterCenter[];
+}) {
+  const [hover, setHover] = useState<HoverState | null>(null);
+
+  return (
+    <>
+      <color attach="background" args={["#020304"]} />
+      <fog attach="fog" args={["#020304", 20, 50]} />
+
+      <ambientLight intensity={0.05} />
+
+      <GridFloor />
+      <AxisLabels />
+      <Nebula clusters={clusters} />
+      <Stars clusters={clusters} />
+      <HoverZone grid={grid} onHover={setHover} />
+      {hover && <Tooltip hover={hover} />}
+
+      <HorizontalPan />
+
+      <EffectComposer>
+        <Bloom
+          intensity={1.5}
+          luminanceThreshold={0.2}
+          luminanceSmoothing={0.9}
+          mipmapBlur
+        />
+      </EffectComposer>
+    </>
+  );
+}
+
 // Main component
 interface ActivityTerrainProps {
   grid: TerrainGrid;
@@ -563,40 +818,14 @@ export function ActivityTerrain({ grid, className }: ActivityTerrainProps) {
     <div className={className} style={{ width: "100%", height: "100%" }}>
       <Canvas
         camera={{
-          position: [0, 8, 5],
-          fov: 65,
+          position: [0, 8, 10],
+          fov: 50,
           near: 0.1,
           far: 100,
         }}
         gl={{ antialias: true }}
       >
-        <color attach="background" args={["#020304"]} />
-        <fog attach="fog" args={["#020304", 20, 50]} />
-
-        <ambientLight intensity={0.05} />
-
-        <GridFloor />
-        <AxisLabels />
-        <Nebula clusters={clusters} />
-        <Stars clusters={clusters} />
-
-        <OrbitControls
-          enableRotate={false}
-          enableZoom={false}
-          enablePan={true}
-          screenSpacePanning={true}
-          panSpeed={0.8}
-          mouseButtons={{ LEFT: 2, MIDDLE: 1, RIGHT: 0 }}
-        />
-
-        <EffectComposer>
-          <Bloom
-            intensity={1.5}
-            luminanceThreshold={0.2}
-            luminanceSmoothing={0.9}
-            mipmapBlur
-          />
-        </EffectComposer>
+        <Scene grid={grid} clusters={clusters} />
       </Canvas>
     </div>
   );
