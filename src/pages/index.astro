@@ -1,5 +1,5 @@
 ---
-import Layout from '../layouts/Layout.astro';
+import DashboardLayout from '../layouts/DashboardLayout.astro';
 import RecentActivity from '../components/RecentActivity.tsx';
 import StatPanel from '../components/StatPanel.tsx';
 import { ActivityTerrain } from '../components/ActivityTerrain';
@@ -32,72 +32,60 @@ const taskTrend = getWeeklyTrend(tasks.map(t => ({ date: t.captured })), 12);
 const activityTrend = commitTrend.map((c, i) => c + (taskTrend[i] || 0));
 ---
 
-<Layout title="Dashboard">
-  <!-- Page Title -->
-  <div class="max-w-6xl mx-auto px-6 pt-8 pb-4">
-    <h1 class="text-3xl font-semibold text-white">Activity</h1>
-  </div>
-
-  <!-- Activity Terrain Hero Section -->
-  <section class="w-full bg-[#020304] border-y border-[#1e2a38]">
-    <div class="w-full h-[450px]">
+<DashboardLayout
+  title="Dashboard"
+  headerTitle="Contribution Heat"
+  currentPath="/"
+  counts={{ commits: counts.commits, projects: counts.projects }}
+>
+  <!-- Hero Section with Activity Terrain (placeholder for 2D chart) -->
+  <section class="relative w-full bg-[#020304] border-b border-dark-gray">
+    <div class="w-full h-[400px]">
       <ActivityTerrain client:visible grid={terrainGrid} />
+    </div>
+
+    <!-- Stat Cards Overlay (positioned at bottom of hero) -->
+    <div class="absolute bottom-6 left-6 right-6 flex gap-4">
+      <div class="bg-bg-deep/80 backdrop-blur border border-dark-gray px-6 py-4 min-w-[140px]">
+        <div class="text-3xl font-semibold text-white">{counts.projects}</div>
+        <div class="text-xs text-gray mt-1">{counts.projects} Projects</div>
+      </div>
+      <div class="bg-bg-deep/80 backdrop-blur border border-dark-gray px-6 py-4 min-w-[140px]">
+        <div class="text-3xl font-semibold text-white">{counts.commits}</div>
+        <div class="text-xs text-gray mt-1">Watts / {counts.commits} Commits</div>
+      </div>
+      <div class="bg-bg-deep/80 backdrop-blur border border-dark-gray px-6 py-4 min-w-[140px]">
+        <div class="text-3xl font-semibold text-white">{counts.personal}</div>
+        <div class="text-xs text-gray mt-1">Personal / {counts.tasks} Journal</div>
+      </div>
     </div>
   </section>
 
-  <div class="max-w-6xl mx-auto px-6 py-12">
-    <!-- Stats Section -->
-    <span class="text-xs text-[#3a5060] uppercase tracking-wider">Activity Overview</span>
-
-    <div class="grid grid-cols-4 gap-4 mt-4">
-      <StatPanel
-        client:load
-        title="Recent Activity"
-        value={totalEntries}
-        trend={activityTrend}
-        trendLabel="Last 12 weeks"
-      />
-      <StatPanel
-        client:load
-        title="Commits"
-        value={counts.commits}
-        trend={commitTrend}
-        trendLabel="Last 12 weeks"
-        link="/commits"
-      />
-      <StatPanel
-        client:load
-        title="Activity Trend"
-        trend={activityTrend}
-        trendLabel="Weekly activity over 12 weeks"
-        variant="chart"
-      />
-      <StatPanel
-        client:load
-        title="Active Projects"
-        variant="placeholder"
-      />
+  <!-- Two-Column Layout Below Hero -->
+  <div class="grid grid-cols-[1fr_1.5fr] gap-6 p-6">
+    <!-- Left: Recent Activity -->
+    <div class="bg-bg-card border border-dark-gray p-6">
+      <h2 class="text-sm font-medium text-white mb-4">Recent activity</h2>
+      <RecentActivity client:load commits={commits} tasks={tasks} limit={5} />
     </div>
 
-    <!-- Recent Activity Feed -->
-    <h2 class="mt-16 mb-6">Recent Activity</h2>
-    <RecentActivity client:load commits={commits} tasks={tasks} limit={8} />
+    <!-- Right: Project Cards (placeholder for Feature 6) -->
+    <div class="space-y-4">
+      <h2 class="text-sm font-medium text-white">Project cards</h2>
+      <div class="grid grid-cols-2 gap-4">
+        <div class="bg-bg-card border border-dark-gray p-4">
+          <div class="text-sm text-gray mb-2">Gain Turquise</div>
+          <div class="h-24 bg-bg-elevated rounded flex items-center justify-center text-xs text-dark-gray">
+            Chart placeholder
+          </div>
+        </div>
+        <div class="bg-bg-card border border-dark-gray p-4">
+          <div class="text-sm text-gray mb-2">Paypalce Series</div>
+          <div class="h-24 bg-bg-elevated rounded flex items-center justify-center text-xs text-dark-gray">
+            Chart placeholder
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
-
-  <!-- Bottom Status Bar -->
-  <footer class="border-t border-dark-gray bg-bg-deep">
-    <div class="max-w-6xl mx-auto px-6 py-3 flex items-center justify-between text-xs text-gray">
-      <div class="flex items-center gap-6">
-        <span class="flex items-center gap-2">
-          <span class="w-2 h-2 rounded-full bg-cyan"></span>
-          System Online
-        </span>
-        <span>{counts.projects} Projects Indexed</span>
-      </div>
-      <div class="flex items-center gap-6">
-        <span>Environment: Development</span>
-        <span>Last Build: {new Date().toLocaleDateString()}</span>
-      </div>
-    </div>
-  </footer>
-</Layout>
+</DashboardLayout>
