@@ -1,39 +1,103 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import StatsCard from '../components/StatsCard.tsx';
 import RecentActivity from '../components/RecentActivity.tsx';
+import StatPanel from '../components/StatPanel.tsx';
 import { ActivityTerrain } from '../components/ActivityTerrain';
-import { counts, commits, tasks, terrainGrid } from '../lib/data';
+import { counts, commits, tasks, terrainGrid, totalEntries } from '../lib/data';
+
+// Generate weekly trends from commits (last 12 weeks)
+function getWeeklyTrend(items: { date: string }[], weeks: number = 12): number[] {
+  const now = new Date();
+  const trend: number[] = [];
+
+  for (let i = weeks - 1; i >= 0; i--) {
+    const weekStart = new Date(now);
+    weekStart.setDate(weekStart.getDate() - (i * 7) - weekStart.getDay());
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekEnd.getDate() + 7);
+
+    const count = items.filter(item => {
+      const date = new Date(item.date);
+      return date >= weekStart && date < weekEnd;
+    }).length;
+
+    trend.push(count);
+  }
+
+  return trend;
+}
+
+const commitTrend = getWeeklyTrend(commits, 12);
+const taskTrend = getWeeklyTrend(tasks.map(t => ({ date: t.captured })), 12);
+const activityTrend = commitTrend.map((c, i) => c + (taskTrend[i] || 0));
 ---
 
 <Layout title="Dashboard">
+  <!-- Page Title -->
+  <div class="max-w-6xl mx-auto px-6 pt-8 pb-4">
+    <h1 class="text-3xl font-semibold text-white">Activity</h1>
+  </div>
+
   <!-- Activity Terrain Hero Section -->
-  <section class="w-full bg-[#020304] border-b border-[#1e2a38]">
-    <!-- Hero Header -->
-    <div class="max-w-6xl mx-auto px-6 pt-8 pb-4">
-      <div class="flex items-center justify-between">
-        <div>
-          <span class="text-[#3a5060] text-sm font-medium tracking-wider uppercase">Knowledge Fabric</span>
-          <h1 class="text-2xl font-semibold text-white mt-1">Activity</h1>
-        </div>
-      </div>
-    </div>
-    <!-- Terrain Visualization -->
+  <section class="w-full bg-[#020304] border-y border-[#1e2a38]">
     <div class="w-full h-[450px]">
       <ActivityTerrain client:visible grid={terrainGrid} />
     </div>
   </section>
 
   <div class="max-w-6xl mx-auto px-6 py-12">
-    <h2 class="mb-6">Key Metrics</h2>
-    <div class="grid grid-cols-4 gap-4">
-      <StatsCard client:load title="Projects" count={counts.projects} link="/projects" icon="projects" />
-      <StatsCard client:load title="Commits" count={counts.commits} link="/commits" icon="commits" />
-      <StatsCard client:load title="Personal" count={counts.personal} link="/personal" icon="personal" />
-      <StatsCard client:load title="Tasks" count={counts.tasks} link="/tasks" icon="tasks" />
+    <!-- Stats Section -->
+    <span class="text-xs text-[#3a5060] uppercase tracking-wider">Activity Overview</span>
+
+    <div class="grid grid-cols-4 gap-4 mt-4">
+      <StatPanel
+        client:load
+        title="Recent Activity"
+        value={totalEntries}
+        trend={activityTrend}
+        trendLabel="Last 12 weeks"
+      />
+      <StatPanel
+        client:load
+        title="Commits"
+        value={counts.commits}
+        trend={commitTrend}
+        trendLabel="Last 12 weeks"
+        link="/commits"
+      />
+      <StatPanel
+        client:load
+        title="Activity Trend"
+        trend={activityTrend}
+        trendLabel="Weekly activity over 12 weeks"
+        variant="chart"
+      />
+      <StatPanel
+        client:load
+        title="Active Projects"
+        variant="placeholder"
+      />
     </div>
 
+    <!-- Recent Activity Feed -->
     <h2 class="mt-16 mb-6">Recent Activity</h2>
     <RecentActivity client:load commits={commits} tasks={tasks} limit={8} />
   </div>
+
+  <!-- Bottom Status Bar -->
+  <footer class="border-t border-dark-gray bg-bg-deep">
+    <div class="max-w-6xl mx-auto px-6 py-3 flex items-center justify-between text-xs text-gray">
+      <div class="flex items-center gap-6">
+        <span class="flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-cyan"></span>
+          System Online
+        </span>
+        <span>{counts.projects} Projects Indexed</span>
+      </div>
+      <div class="flex items-center gap-6">
+        <span>Environment: Development</span>
+        <span>Last Build: {new Date().toLocaleDateString()}</span>
+      </div>
+    </div>
+  </footer>
 </Layout>
