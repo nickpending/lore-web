@@ -1,7 +1,11 @@
 ---
 import Layout from "../layouts/Layout.astro";
 import { ActivityTerrain } from "../components/ActivityTerrain";
+import Sparkline from "../components/Sparkline";
 import { terrainGrid } from "../lib/data";
+
+const sampleData = [10, 25, 15, 30, 20, 35, 28, 40, 32, 45, 38, 50];
+const flatData = [10, 10, 10, 10];
 ---
 
 <Layout title="Terrain Test">
@@ -9,6 +13,33 @@ import { terrainGrid } from "../lib/data";
     <h1 class="text-white text-2xl p-4">Activity Terrain Test</h1>
     <div class="w-full h-[600px]">
       <ActivityTerrain client:load grid={terrainGrid} />
+    </div>
+
+    <!-- Sparkline Tests -->
+    <div class="p-8 space-y-6">
+      <h2 class="text-white text-xl">Sparkline Tests</h2>
+
+      <div class="flex gap-8 items-end">
+        <div class="bg-bg-card p-4 border border-dark-gray">
+          <p class="text-gray text-xs mb-2">Line (default)</p>
+          <Sparkline data={sampleData} width={150} height={40} />
+        </div>
+
+        <div class="bg-bg-card p-4 border border-dark-gray">
+          <p class="text-gray text-xs mb-2">Area (filled)</p>
+          <Sparkline data={sampleData} width={150} height={40} filled />
+        </div>
+
+        <div class="bg-bg-card p-4 border border-dark-gray">
+          <p class="text-gray text-xs mb-2">Flat data</p>
+          <Sparkline data={flatData} width={150} height={40} />
+        </div>
+
+        <div class="bg-bg-card p-4 border border-dark-gray">
+          <p class="text-gray text-xs mb-2">Custom color</p>
+          <Sparkline data={sampleData} width={150} height={40} color="#A855F7" filled />
+        </div>
+      </div>
     </div>
   </div>
 </Layout>

@@ -2,10 +2,28 @@
 import Layout from '../layouts/Layout.astro';
 import StatsCard from '../components/StatsCard.tsx';
 import RecentActivity from '../components/RecentActivity.tsx';
-import { counts, commits, tasks } from '../lib/data';
+import { ActivityTerrain } from '../components/ActivityTerrain';
+import { counts, commits, tasks, terrainGrid } from '../lib/data';
 ---
 
 <Layout title="Dashboard">
+  <!-- Activity Terrain Hero Section -->
+  <section class="w-full bg-[#020304] border-b border-[#1e2a38]">
+    <!-- Hero Header -->
+    <div class="max-w-6xl mx-auto px-6 pt-8 pb-4">
+      <div class="flex items-center justify-between">
+        <div>
+          <span class="text-[#3a5060] text-sm font-medium tracking-wider uppercase">Knowledge Fabric</span>
+          <h1 class="text-2xl font-semibold text-white mt-1">Activity</h1>
+        </div>
+      </div>
+    </div>
+    <!-- Terrain Visualization -->
+    <div class="w-full h-[450px]">
+      <ActivityTerrain client:visible grid={terrainGrid} />
+    </div>
+  </section>
+
   <div class="max-w-6xl mx-auto px-6 py-12">
     <h2 class="mb-6">Key Metrics</h2>
     <div class="grid grid-cols-4 gap-4">
