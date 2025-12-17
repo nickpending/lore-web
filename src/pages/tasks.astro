@@ -1,0 +1,12 @@
+---
+import Layout from "../layouts/Layout.astro";
+import TasksView from "../components/TasksView";
+import { tasks } from "../lib/data";
+---
+
+<Layout title="Tasks">
+  <div class="max-w-6xl mx-auto px-6 py-12">
+    <h2 class="mb-6">Tasks</h2>
+    <TasksView client:load tasks={tasks} />
+  </div>
+</Layout>

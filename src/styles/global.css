@@ -1,0 +1,102 @@
+@import "tailwindcss";
+
+/* Voidwire Design System Tokens */
+@theme {
+  /* Primary Palette */
+  --color-cyan: #00D9FF;
+  --color-purple: #E6CCFF;
+  --color-vibrant-purple: #9F4DFF;
+
+  /* Semantic (Muted) */
+  --color-success: #4a9e6b;
+  --color-danger: #a65d6d;
+  --color-warning: #a68a4d;
+
+  /* Neutral */
+  --color-white: #EEEEEE;
+  --color-text: #BBBBBB;
+  --color-gray: #666666;
+  --color-dark-gray: #333333;
+
+  /* Backgrounds */
+  --color-bg-deep: #0a0e14;
+  --color-bg-card: #0f1419;
+  --color-bg-elevated: #151b23;
+
+  /* Font Families */
+  --font-display: 'Archivo', system-ui, sans-serif;
+  --font-body: 'Inter', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+}
+
+/* CSS Custom Properties for direct use */
+:root {
+  --vw-cyan: #00D9FF;
+  --vw-purple: #E6CCFF;
+  --vw-vibrant-purple: #9F4DFF;
+  --vw-success: #4a9e6b;
+  --vw-danger: #a65d6d;
+  --vw-warning: #a68a4d;
+  --vw-white: #EEEEEE;
+  --vw-text: #BBBBBB;
+  --vw-gray: #666666;
+  --vw-dark-gray: #333333;
+  --vw-bg-deep: #0a0e14;
+  --vw-bg-card: #0f1419;
+  --vw-bg-elevated: #151b23;
+  --vw-gradient: linear-gradient(90deg, #00D9FF, #9F4DFF, #FF5C5C);
+  --vw-gradient-subtle: linear-gradient(90deg, #00D9FF, #9F4DFF);
+}
+
+/* Base styles */
+html {
+  font-family: var(--font-body);
+  color: var(--color-text);
+  background-color: var(--color-bg-deep);
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-size: 14px;
+  line-height: 1.6;
+  background-color: var(--color-bg-deep);
+}
+
+/* Typography */
+h1 {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  font-weight: 500;
+  color: var(--color-white);
+  letter-spacing: -0.01em;
+}
+
+h2 {
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--color-cyan);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+h3 {
+  font-family: var(--font-body);
+  font-weight: 600;
+  color: var(--color-white);
+}
+
+code, pre {
+  font-family: var(--font-mono);
+  font-size: 13px;
+}
+
+a {
+  color: var(--color-cyan);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: none;
+}

@@ -1,0 +1,14 @@
+---
+import Layout from "../layouts/Layout.astro";
+import { ActivityTerrain } from "../components/ActivityTerrain";
+import { terrainGrid } from "../lib/data";
+---
+
+<Layout title="Terrain Test">
+  <div class="min-h-screen bg-[#000508]">
+    <h1 class="text-white text-2xl p-4">Activity Terrain Test</h1>
+    <div class="w-full h-[600px]">
+      <ActivityTerrain client:load grid={terrainGrid} />
+    </div>
+  </div>
+</Layout>

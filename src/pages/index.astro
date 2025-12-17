@@ -1,0 +1,21 @@
+---
+import Layout from '../layouts/Layout.astro';
+import StatsCard from '../components/StatsCard.tsx';
+import RecentActivity from '../components/RecentActivity.tsx';
+import { counts, commits, tasks } from '../lib/data';
+---
+
+<Layout title="Dashboard">
+  <div class="max-w-6xl mx-auto px-6 py-12">
+    <h2 class="mb-6">Key Metrics</h2>
+    <div class="grid grid-cols-4 gap-4">
+      <StatsCard client:load title="Projects" count={counts.projects} link="/projects" icon="projects" />
+      <StatsCard client:load title="Commits" count={counts.commits} link="/commits" icon="commits" />
+      <StatsCard client:load title="Personal" count={counts.personal} link="/personal" icon="personal" />
+      <StatsCard client:load title="Tasks" count={counts.tasks} link="/tasks" icon="tasks" />
+    </div>
+
+    <h2 class="mt-16 mb-6">Recent Activity</h2>
+    <RecentActivity client:load commits={commits} tasks={tasks} limit={8} />
+  </div>
+</Layout>

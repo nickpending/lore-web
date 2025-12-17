@@ -1,0 +1,14 @@
+---
+interface Props {
+  title: string;
+  count: number;
+  link: string;
+}
+
+const { title, count, link } = Astro.props;
+---
+
+<a href={link} class="block bg-bg-card border border-dark-gray p-6 hover:border-cyan transition-colors no-underline hover:no-underline">
+  <div class="text-4xl font-medium text-white">{count.toLocaleString()}</div>
+  <div class="text-sm text-gray mt-2">{title}</div>
+</a>

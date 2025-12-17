@@ -1,0 +1,12 @@
+---
+import Layout from '../layouts/Layout.astro';
+import PersonalView from '../components/PersonalView.tsx';
+import { personal } from '../lib/data';
+---
+
+<Layout title="Personal">
+  <div class="max-w-6xl mx-auto px-6 py-12">
+    <h2 class="mb-6">Personal</h2>
+    <PersonalView client:load items={personal} />
+  </div>
+</Layout>

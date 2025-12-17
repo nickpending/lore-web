@@ -1,0 +1,34 @@
+---
+const currentPath = Astro.url.pathname;
+
+const navLinks = [
+  { href: '/projects', label: 'projects' },
+  { href: '/personal', label: 'personal' },
+  { href: '/commits', label: 'commits' },
+  { href: '/tasks', label: 'tasks' },
+];
+---
+
+<nav class="border-b border-dark-gray">
+  <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+    <a href="/" class="flex items-center gap-2 no-underline hover:no-underline">
+      <img src="/logo.png" alt="lore" class="h-8" />
+    </a>
+
+    <div class="flex items-center gap-8">
+      {navLinks.map((link) => (
+        <a
+          href={link.href}
+          class:list={[
+            'text-sm font-medium transition-colors no-underline',
+            currentPath === link.href
+              ? 'text-cyan border-b-2 border-cyan pb-1'
+              : 'text-gray hover:text-cyan'
+          ]}
+        >
+          {link.label}
+        </a>
+      ))}
+    </div>
+  </div>
+</nav>

@@ -1,0 +1,55 @@
+---
+import type { Commit, Task } from '../lib/types';
+
+interface Props {
+  commits: Commit[];
+  tasks: Task[];
+  limit?: number;
+}
+
+const { commits, tasks, limit = 5 } = Astro.props;
+
+// Combine and sort by date (most recent first)
+type ActivityItem = { type: 'commit'; date: string; title: string } | { type: 'task'; date: string; title: string };
+
+const activities: ActivityItem[] = [
+  ...commits.map(c => ({ type: 'commit' as const, date: c.date, title: c.title })),
+  ...tasks.map(t => ({ type: 'task' as const, date: t.date, title: t.title })),
+]
+  .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+  .slice(0, limit);
+
+// Format relative time
+function formatRelativeTime(dateStr: string): string {
+  const date = new Date(dateStr);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+  const diffDays = Math.floor(diffHours / 24);
+
+  if (diffHours < 1) return 'just now';
+  if (diffHours < 24) return `${diffHours}h ago`;
+  if (diffDays < 7) return `${diffDays}d ago`;
+  if (diffDays < 30) return `${Math.floor(diffDays / 7)}w ago`;
+  return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+}
+---
+
+<div class="space-y-2">
+  {activities.map(activity => (
+    <div class="bg-bg-card border border-dark-gray p-4 flex items-center justify-between hover:border-cyan transition-colors">
+      <div class="flex items-center gap-3">
+        <span class={activity.type === 'commit' ? 'text-cyan' : 'text-purple'}>
+          {activity.type === 'commit' ? '-o-' : '[ ]'}
+        </span>
+        <span class="truncate max-w-md">
+          {activity.type === 'commit' ? 'Commit' : 'Task'}: {activity.title}
+        </span>
+      </div>
+      <span class="text-gray text-sm whitespace-nowrap ml-4">{formatRelativeTime(activity.date)}</span>
+    </div>
+  ))}
+  {activities.length === 0 && (
+    <div class="text-gray text-sm">No recent activity</div>
+  )}
+</div>
