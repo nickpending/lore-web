@@ -4,8 +4,8 @@
 @theme {
   /* Primary Palette */
   --color-cyan: #00D9FF;
-  --color-purple: #E6CCFF;
-  --color-vibrant-purple: #9F4DFF;
+  --color-purple: #9F4DFF;
+  --color-pale-purple: #E6CCFF;
 
   /* Semantic (Muted) */
   --color-success: #4a9e6b;
@@ -32,8 +32,8 @@
 /* CSS Custom Properties for direct use */
 :root {
   --vw-cyan: #00D9FF;
-  --vw-purple: #E6CCFF;
-  --vw-vibrant-purple: #9F4DFF;
+  --vw-purple: #9F4DFF;
+  --vw-pale-purple: #E6CCFF;
   --vw-success: #4a9e6b;
   --vw-danger: #a65d6d;
   --vw-warning: #a68a4d;
