@@ -67,7 +67,7 @@ const chartData = getDailyActivityData(commits, tasks, 12);
 
 <DashboardLayout
   title="Dashboard"
-  headerTitle="Contribution Heat"
+  headerTitle="Overview"
   currentPath="/"
   counts={{ commits: counts.commits, projects: counts.projects }}
 >
@@ -79,17 +79,17 @@ const chartData = getDailyActivityData(commits, tasks, 12);
 
     <!-- Stat Cards Overlay (positioned at bottom of hero) -->
     <div class="absolute bottom-6 left-6 right-6 flex gap-4">
-      <div class="bg-bg-deep/80 backdrop-blur border border-dark-gray px-6 py-4 min-w-[140px]">
+      <div class="bg-bg-elevated/90 backdrop-blur rounded border border-cyan/30 px-6 py-4 min-w-[140px]">
         <div class="text-3xl font-semibold text-white">{counts.projects}</div>
-        <div class="text-xs text-gray mt-1">{counts.projects} Projects</div>
+        <div class="text-xs text-gray mt-1">Projects</div>
       </div>
-      <div class="bg-bg-deep/80 backdrop-blur border border-dark-gray px-6 py-4 min-w-[140px]">
+      <div class="bg-bg-elevated/90 backdrop-blur rounded border border-cyan/30 px-6 py-4 min-w-[140px]">
         <div class="text-3xl font-semibold text-white">{counts.commits}</div>
-        <div class="text-xs text-gray mt-1">Watts / {counts.commits} Commits</div>
+        <div class="text-xs text-gray mt-1">Commits</div>
       </div>
-      <div class="bg-bg-deep/80 backdrop-blur border border-dark-gray px-6 py-4 min-w-[140px]">
+      <div class="bg-bg-elevated/90 backdrop-blur rounded border border-cyan/30 px-6 py-4 min-w-[140px]">
         <div class="text-3xl font-semibold text-white">{counts.personal}</div>
-        <div class="text-xs text-gray mt-1">Personal / {counts.tasks} Journal</div>
+        <div class="text-xs text-gray mt-1">Personal</div>
       </div>
     </div>
   </section>

@@ -32,7 +32,7 @@ export default function ActivityChart({
   data,
   height = 350,
   color = "#00D9FF",
-  title = "Heros",
+  title = "Signal",
   className = "",
   monthsToShow = 1,
 }: Props) {
@@ -143,9 +143,21 @@ export default function ActivityChart({
   // Generate vertical grid lines at month boundaries
   const gridLines = monthLabels.map((label) => ({
     x: label.x,
-    y1: padding.top,
-    y2: padding.top + innerHeight,
+    y1: 0,
+    y2: height,
   }));
+
+  // Generate particles with y-positions biased toward activity areas
+  const activityYPositions = [
+    ...commitPoints.map((p) => p.y),
+    ...taskPoints.map((p) => p.y),
+  ];
+  const particles = generateParticles(
+    width,
+    height,
+    padding,
+    activityYPositions,
+  );
 
   // Navigation handlers
   const canGoBack = windowOffset < maxOffset;
@@ -276,7 +288,86 @@ export default function ActivityChart({
             <stop offset="80%" stopColor="#9F4DFF" stopOpacity="0.04" />
             <stop offset="100%" stopColor="#9F4DFF" stopOpacity="0" />
           </linearGradient>
+
+          {/* Particle glow filters - subtle and strong */}
+          <filter
+            id="particle-glow"
+            x="-50%"
+            y="-50%"
+            width="200%"
+            height="200%"
+          >
+            <feGaussianBlur stdDeviation="2" result="blur" />
+            <feMerge>
+              <feMergeNode in="blur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+          <filter
+            id="particle-glow-strong"
+            x="-100%"
+            y="-100%"
+            width="300%"
+            height="300%"
+          >
+            <feGaussianBlur stdDeviation="4" result="blur" />
+            <feMerge>
+              <feMergeNode in="blur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
         </defs>
+
+        {/* Grid aligned to data points */}
+        <g aria-hidden="true">
+          {/* Vertical lines for each day - extend full height */}
+          {commitPoints.map((p, i) => (
+            <line
+              key={`vgrid-${i}`}
+              x1={p.x}
+              y1={0}
+              x2={p.x}
+              y2={height}
+              stroke="#00D9FF"
+              strokeOpacity={0.06}
+              strokeWidth={1}
+            />
+          ))}
+          {/* Horizontal lines (5 rows) */}
+          {[0, 0.25, 0.5, 0.75, 1].map((ratio, i) => (
+            <line
+              key={`hgrid-${i}`}
+              x1={padding.left}
+              y1={padding.top + innerHeight * ratio}
+              x2={padding.left + innerWidth}
+              y2={padding.top + innerHeight * ratio}
+              stroke="#00D9FF"
+              strokeOpacity={0.06}
+              strokeWidth={1}
+            />
+          ))}
+        </g>
+
+        {/* Particle starfield background */}
+        <g aria-hidden="true">
+          {particles.map((p, i) => (
+            <circle
+              key={i}
+              cx={p.x}
+              cy={p.y}
+              r={p.r}
+              fill={p.color}
+              fillOpacity={p.opacity}
+              filter={
+                p.glow === "strong"
+                  ? "url(#particle-glow-strong)"
+                  : p.glow === "subtle"
+                    ? "url(#particle-glow)"
+                    : undefined
+              }
+            />
+          ))}
+        </g>
 
         {/* Title inside chart */}
         <text
@@ -444,6 +535,71 @@ function buildSmoothPath(
   }
 
   return path;
+}
+
+// Seeded random number generator for consistent particle positions
+function seededRandom(seed: number): () => number {
+  return () => {
+    seed = (seed * 1103515245 + 12345) & 0x7fffffff;
+    return seed / 0x7fffffff;
+  };
+}
+
+interface Particle {
+  x: number;
+  y: number;
+  r: number;
+  opacity: number;
+  glow: "none" | "subtle" | "strong";
+  color: string;
+}
+
+function generateParticles(
+  width: number,
+  height: number,
+  padding: { top: number; right: number; bottom: number; left: number },
+  _activityYPositions: number[],
+  count: number = 500,
+): Particle[] {
+  const random = seededRandom(42);
+  const particles: Particle[] = [];
+
+  const innerWidth = width - padding.left - padding.right;
+  const innerHeight = height - padding.top - padding.bottom;
+
+  for (let i = 0; i < count; i++) {
+    // Completely random positions
+    const x = padding.left + random() * innerWidth;
+    const y = padding.top + random() * innerHeight;
+
+    // Size: mostly small, but with medium and large particles too
+    const sizeRoll = random();
+    const r =
+      sizeRoll < 0.7
+        ? 0.3 + random() * 1.5 // 70% tiny (0.3-1.8px)
+        : sizeRoll < 0.9
+          ? 1.5 + random() * 2 // 20% medium (1.5-3.5px)
+          : 3 + random() * 2.5; // 10% large (3-5.5px)
+
+    // Opacity: mostly subtle, 5% bright
+    const opacityRoll = random();
+    const opacity =
+      opacityRoll < 0.05
+        ? 0.7 + random() * 0.3 // 5% bright (0.7-1.0)
+        : 0.08 + random() * 0.42; // 95% subtle (0.08-0.5)
+
+    // 35% get glow effect (20% subtle, 15% strong)
+    const glowRoll = random();
+    const glow: "none" | "subtle" | "strong" =
+      glowRoll < 0.15 ? "strong" : glowRoll < 0.35 ? "subtle" : "none";
+
+    // Color: mostly cyan, some purple
+    const color = random() < 0.7 ? "#00D9FF" : "#9F4DFF";
+
+    particles.push({ x, y, r, opacity, glow, color });
+  }
+
+  return particles;
 }
 
 function formatDate(isoDate: string): string {
