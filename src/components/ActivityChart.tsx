@@ -137,6 +137,11 @@ export default function ActivityChart({
       ? `${taskPath} L ${taskPoints[taskPoints.length - 1].x.toFixed(2)},${padding.top + innerHeight} L ${padding.left},${padding.top + innerHeight} Z`
       : "";
 
+  // Find peaks in both lines for annotations
+  const commitPeaks = findPeaks(commitPoints, maxValue, "#00D9FF", 3, 0.25);
+  const taskPeaks = findPeaks(taskPoints, maxValue, "#9F4DFF", 3, 0.25);
+  const allPeaks = adjustPeakPositions([...commitPeaks, ...taskPeaks], 50);
+
   // Generate month labels from windowed data
   const monthLabels = generateMonthLabels(windowedData, padding, innerWidth);
 
@@ -424,6 +429,23 @@ export default function ActivityChart({
           />
         )}
 
+        {/* Peak annotations */}
+        {allPeaks.map((peak, i) => (
+          <text
+            key={`peak-${i}`}
+            x={peak.x}
+            y={peak.y}
+            textAnchor="middle"
+            fill={peak.color}
+            fillOpacity={0.8}
+            fontSize="11"
+            fontFamily="Inter, system-ui, sans-serif"
+            fontWeight="500"
+          >
+            {peak.percentage}%
+          </text>
+        ))}
+
         {/* Hover indicators - one on each line */}
         {hover && (
           <>
@@ -600,6 +622,70 @@ function generateParticles(
   }
 
   return particles;
+}
+
+interface Peak {
+  x: number;
+  y: number;
+  percentage: number;
+  color: string;
+}
+
+// Find local maxima in point array, return top N peaks with percentage labels
+function findPeaks(
+  points: { x: number; y: number; value: number }[],
+  maxValue: number,
+  color: string,
+  topN: number = 3,
+  minThreshold: number = 0.2, // minimum 20% of max to be considered
+): Peak[] {
+  if (points.length < 3) return [];
+
+  const peaks: Peak[] = [];
+
+  for (let i = 1; i < points.length - 1; i++) {
+    const prev = points[i - 1].value;
+    const curr = points[i].value;
+    const next = points[i + 1].value;
+
+    // Local maximum: higher than both neighbors
+    if (curr > prev && curr > next && curr > 0) {
+      const percentage = Math.round((curr / maxValue) * 100);
+      if (percentage >= minThreshold * 100) {
+        peaks.push({
+          x: points[i].x,
+          y: points[i].y,
+          percentage,
+          color,
+        });
+      }
+    }
+  }
+
+  // Sort by percentage descending, take top N
+  return peaks.sort((a, b) => b.percentage - a.percentage).slice(0, topN);
+}
+
+// Adjust peak label positions to avoid overlap
+function adjustPeakPositions(peaks: Peak[], minGap: number = 40): Peak[] {
+  if (peaks.length <= 1) return peaks;
+
+  // Sort by x position for overlap detection
+  const sorted = [...peaks].sort((a, b) => a.x - b.x);
+  const adjusted = sorted.map((p) => ({ ...p, labelY: p.y - 25 }));
+
+  // Check for horizontal overlap and stagger vertically
+  for (let i = 1; i < adjusted.length; i++) {
+    const prev = adjusted[i - 1];
+    const curr = adjusted[i];
+
+    if (Math.abs(curr.x - prev.x) < minGap) {
+      // Stagger: alternate between higher and lower positions
+      curr.labelY = prev.labelY - 18;
+    }
+  }
+
+  return adjusted.map((p) => ({ ...p, y: p.labelY }));
 }
 
 function formatDate(isoDate: string): string {
