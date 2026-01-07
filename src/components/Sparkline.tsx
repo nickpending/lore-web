@@ -6,6 +6,7 @@ interface Props {
   strokeWidth?: number;
   filled?: boolean;
   className?: string;
+  xLabels?: string[];
 }
 
 export default function Sparkline({
@@ -16,7 +17,12 @@ export default function Sparkline({
   strokeWidth = 2,
   filled = false,
   className = "",
+  xLabels,
 }: Props) {
+  // Add extra height for labels if provided
+  const labelHeight = xLabels && xLabels.length > 0 ? 16 : 0;
+  const totalHeight = height + labelHeight;
+  const chartHeight = height;
   // Handle empty or single-point data
   if (!data || data.length < 2) {
     return null;
@@ -47,16 +53,22 @@ export default function Sparkline({
     )
     .join(" ");
 
-  // Build area path (closes to bottom)
+  // Build area path (closes to bottom of chart area)
   const areaPath = filled
-    ? `${linePath} L ${points[points.length - 1].x.toFixed(2)},${height - padding} L ${padding},${height - padding} Z`
+    ? `${linePath} L ${points[points.length - 1].x.toFixed(2)},${chartHeight - padding} L ${padding},${chartHeight - padding} Z`
     : "";
+
+  // Generate label positions (evenly spaced)
+  const labelPositions = xLabels?.map((label, index) => {
+    const x = padding + (index / Math.max(1, xLabels.length - 1)) * innerWidth;
+    return { label, x };
+  });
 
   return (
     <svg
       width={width}
-      height={height}
-      viewBox={`0 0 ${width} ${height}`}
+      height={totalHeight}
+      viewBox={`0 0 ${width} ${totalHeight}`}
       className={className}
       aria-hidden="true"
     >
@@ -69,6 +81,20 @@ export default function Sparkline({
         strokeLinecap="round"
         strokeLinejoin="round"
       />
+      {/* X-axis labels */}
+      {labelPositions?.map((item, i) => (
+        <text
+          key={i}
+          x={item.x}
+          y={chartHeight + 12}
+          textAnchor="middle"
+          fill="#6b7280"
+          fontSize="10"
+          fontFamily="Inter, system-ui, sans-serif"
+        >
+          {item.label}
+        </text>
+      ))}
     </svg>
   );
 }
