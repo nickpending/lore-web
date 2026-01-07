@@ -1,9 +1,9 @@
 ---
 import DashboardLayout from '../layouts/DashboardLayout.astro';
-import RecentActivity from '../components/RecentActivity.tsx';
+import RecentActivityList from '../components/RecentActivityList.tsx';
 import ActivityChart from '../components/ActivityChart.tsx';
 import StatPanel from '../components/StatPanel.tsx';
-import { counts, commits, tasks } from '../lib/data';
+import { counts, commits, tasks, captures, projects, personal, explorations, blogs } from '../lib/data';
 
 // Generate daily activity data for the full year (for client-side windowing)
 interface DailyData {
@@ -89,9 +89,18 @@ const chartData = getDailyActivityData(commits, tasks, 12);
   <!-- Two-Column Layout Below Hero -->
   <div class="grid grid-cols-[1fr_1.5fr] gap-6 p-6">
     <!-- Left: Recent Activity -->
-    <div class="bg-bg-card border border-dark-gray p-6">
-      <h2 class="text-sm font-medium text-white mb-4">Recent activity</h2>
-      <RecentActivity client:load commits={commits} tasks={tasks} limit={5} />
+    <div class="bg-bg-card border border-dark-gray p-6 rounded">
+      <RecentActivityList
+        client:load
+        commits={commits}
+        tasks={tasks}
+        captures={captures}
+        projects={projects}
+        personal={personal}
+        explorations={explorations}
+        blogs={blogs}
+        limit={8}
+      />
     </div>
 
     <!-- Right: Project Cards (placeholder for Feature 6) -->

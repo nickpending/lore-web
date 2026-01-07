@@ -5,6 +5,8 @@ import { queryBySource } from "./db";
 import type {
   Blog,
   BlogMetadata,
+  Capture,
+  CaptureMetadata,
   Commit,
   CommitMetadata,
   Exploration,
@@ -116,4 +118,20 @@ export function getBlogs(): Blog[] {
       };
     })
     .filter((b): b is Blog => b !== null);
+}
+
+// --- Captures ---
+export function getCaptures(): Capture[] {
+  const entries = queryBySource("captures");
+  return entries
+    .map((entry) => {
+      const meta = parseMetadata<CaptureMetadata>(entry);
+      if (!meta) return null;
+      return {
+        ...meta,
+        title: entry.title,
+        content: entry.content,
+      };
+    })
+    .filter((c): c is Capture => c !== null);
 }

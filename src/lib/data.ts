@@ -4,6 +4,7 @@
 import { getAllCounts } from "./db";
 import {
   getBlogs,
+  getCaptures,
   getCommits,
   getExplorations,
   getPersonalItems,
@@ -13,6 +14,7 @@ import {
 import { buildTerrainHeightmap, type TerrainGrid } from "./terrain-data";
 import type {
   Blog,
+  Capture,
   Commit,
   Exploration,
   LoreCounts,
@@ -28,6 +30,7 @@ export const personal: PersonalItem[] = getPersonalItems();
 export const tasks: Task[] = getTasks();
 export const explorations: Exploration[] = getExplorations();
 export const blogs: Blog[] = getBlogs();
+export const captures: Capture[] = getCaptures();
 
 // Counts for dashboard
 const rawCounts = getAllCounts();
@@ -38,6 +41,7 @@ export const counts: LoreCounts = {
   tasks: rawCounts.tasks ?? 0,
   explorations: rawCounts.explorations ?? 0,
   blogs: rawCounts.blogs ?? 0,
+  captures: rawCounts.captures ?? 0,
 };
 
 // Total entries across all sources
@@ -47,7 +51,8 @@ export const totalEntries =
   counts.personal +
   counts.tasks +
   counts.explorations +
-  counts.blogs;
+  counts.blogs +
+  counts.captures;
 
 // Terrain grid for 3D visualization
 export const terrainGrid: TerrainGrid = buildTerrainHeightmap(

@@ -160,6 +160,28 @@ export interface Blog extends BlogMetadata {
   content: string; // from LoreEntry.content (preview)
 }
 
+// --- Captures ---
+export type CaptureType =
+  | "decision"
+  | "learning"
+  | "gotcha"
+  | "preference"
+  | "idea"
+  | "note";
+
+export interface CaptureMetadata {
+  context: string;
+  type: CaptureType;
+  date: string;
+  timestamp: string;
+  capture: string;
+}
+
+export interface Capture extends CaptureMetadata {
+  title: string;
+  content: string;
+}
+
 // --- Aggregated counts for dashboard ---
 export interface LoreCounts {
   projects: number;
@@ -168,4 +190,5 @@ export interface LoreCounts {
   tasks: number;
   explorations: number;
   blogs: number;
+  captures: number;
 }
