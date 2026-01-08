@@ -3,7 +3,8 @@ import DashboardLayout from '../layouts/DashboardLayout.astro';
 import RecentActivityList from '../components/RecentActivityList.tsx';
 import ActivityChart from '../components/ActivityChart.tsx';
 import StatPanel from '../components/StatPanel.tsx';
-import { counts, commits, tasks, captures, projects, personal, explorations, blogs } from '../lib/data';
+import ProjectActivityCard from '../components/ProjectActivityCard.tsx';
+import { counts, commits, tasks, captures, projects, personal, explorations, blogs, getProjectActivityData, getCapturesActivityData, getTasksActivityData } from '../lib/data';
 
 // Generate daily activity data for the full year (for client-side windowing)
 interface DailyData {
@@ -64,6 +65,12 @@ function getDailyActivityData(
 
 // Full year of data - chart component will show 3 months at a time with navigation
 const chartData = getDailyActivityData(commits, tasks, 12);
+
+// Activity data for dashboard cards (12-week window = ~3 months, weekly resolution)
+const cardWeeks = 12;
+const topProjects = getProjectActivityData(2, cardWeeks);
+const capturesActivity = getCapturesActivityData(cardWeeks);
+const tasksActivity = getTasksActivityData(cardWeeks);
 ---
 
 <DashboardLayout
@@ -103,22 +110,41 @@ const chartData = getDailyActivityData(commits, tasks, 12);
       />
     </div>
 
-    <!-- Right: Project Cards (placeholder for Feature 6) -->
+    <!-- Right: Activity Cards -->
     <div class="space-y-4">
-      <h2 class="text-sm font-medium text-white">Project cards</h2>
+      <h2 class="text-sm font-medium text-white">Activity Trends</h2>
       <div class="grid grid-cols-2 gap-4">
-        <div class="bg-bg-card border border-dark-gray p-4">
-          <div class="text-sm text-gray mb-2">Gain Turquise</div>
-          <div class="h-24 bg-bg-elevated rounded flex items-center justify-center text-xs text-dark-gray">
-            Chart placeholder
-          </div>
-        </div>
-        <div class="bg-bg-card border border-dark-gray p-4">
-          <div class="text-sm text-gray mb-2">Paypalce Series</div>
-          <div class="h-24 bg-bg-elevated rounded flex items-center justify-center text-xs text-dark-gray">
-            Chart placeholder
-          </div>
-        </div>
+        {/* Top 2 projects */}
+        {topProjects.map((project) => (
+          <ProjectActivityCard
+            client:load
+            label={project.projectName}
+            data={project.data}
+            weekDates={project.weekDates}
+            total={project.totalCommits}
+            unit="commits"
+          />
+        ))}
+        {/* Captures */}
+        <ProjectActivityCard
+          client:load
+          label={capturesActivity.label}
+          data={capturesActivity.data}
+          weekDates={capturesActivity.weekDates}
+          total={capturesActivity.total}
+          unit="captured"
+          color="#9F4DFF"
+        />
+        {/* Tasks */}
+        <ProjectActivityCard
+          client:load
+          label={tasksActivity.label}
+          data={tasksActivity.data}
+          weekDates={tasksActivity.weekDates}
+          total={tasksActivity.total}
+          unit="tracked"
+          color="#00D9FF"
+        />
       </div>
     </div>
   </div>
