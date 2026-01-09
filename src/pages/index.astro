@@ -94,7 +94,7 @@ const tasksActivity = getTasksActivityData(cardWeeks);
   </section>
 
   <!-- Two-Column Layout Below Hero -->
-  <div class="grid grid-cols-[1fr_1.5fr] gap-6 p-6">
+  <div class="grid grid-cols-1 lg:grid-cols-[1fr_1.5fr] gap-6 p-6">
     <!-- Left: Recent Activity -->
     <div class="bg-bg-card border border-dark-gray p-6 rounded">
       <RecentActivityList
@@ -113,7 +113,7 @@ const tasksActivity = getTasksActivityData(cardWeeks);
     <!-- Right: Activity Cards -->
     <div class="space-y-4">
       <h2 class="text-sm font-medium text-white">Activity Trends</h2>
-      <div class="grid grid-cols-2 gap-4">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {/* Top 2 projects */}
         {topProjects.map((project) => (
           <ProjectActivityCard

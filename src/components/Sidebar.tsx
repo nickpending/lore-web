@@ -34,7 +34,7 @@ const navItems: NavItem[] = [
 
 export default function Sidebar({ currentPath = "/", counts }: Props) {
   return (
-    <aside className="fixed left-0 top-0 h-screen w-52 bg-bg-deep border-r border-dark-gray flex flex-col z-50">
+    <aside className="fixed left-0 top-0 h-screen w-52 bg-bg-deep border-r border-dark-gray hidden lg:flex flex-col z-50">
       {/* Logo */}
       <div className="p-5 border-b border-dark-gray">
         <a href="/" className="flex items-center gap-2 no-underline">
